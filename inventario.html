@@ -1,0 +1,633 @@
+<?php
+session_start();
+if (!isset($_SESSION['user'])) {
+    header("Location: index.html");
+    exit();
+}
+?>
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión de Inventarios</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        /** Estilo del header Interfaz 1 **/
+        header {
+            background-color: #007bff;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+            position: relative;
+        }
+        
+        /** Estilo de caja de Header de Interfaz 1 **/
+        header h1 {
+            margin: 0;
+        }
+
+        /** Seccion de Estilos para Botones **/
+        /** Estilo de caja de Boton Interfaz 1 **/ 
+        .header-buttons {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        
+        /** Estilo de Texto de Boton de Interfaz 1 **/
+        .header-buttons button {
+            margin-left: 10px;
+            padding: 5px 10px;
+            font-size: 14px;
+            border: none;
+            background-color: #0056b3;
+            color: white;
+            cursor: pointer;
+        }
+         /** Boton-negativo **/
+        #negative-button {
+
+            margin-left: 10px;
+            padding: 5px 10px;
+            font-size: 14px;
+            border: none;
+            background-color: #9b2501;
+            color: white;
+            cursor: pointer;
+
+        }
+
+        #negative-button:hover{
+
+        margin-left: 10px;
+        padding: 5px 10px;
+        font-size: 14px;
+        border: none;
+        background-color: #b32a00;
+        color: white;
+        cursor: pointer;
+
+}
+
+        /** Efectos y transiciones de Botones de Interfaz 1 **/
+        .header-buttons button:hover {
+            background-color: #004494;
+        }
+        
+        nav {
+            margin: 20px;
+            text-align: center;
+        }
+        
+        nav button {
+            margin: 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+
+        nav button:hover {
+            background-color: #0056b3;
+        }
+
+        main {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .section {
+            display: none;
+            padding: 20px;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+        .form-container {
+            margin-top: 20px;
+        }
+
+        .form-container input, .form-container select {
+            margin: 5px 0;
+            padding: 10px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .form-container button {
+            margin: 10px 0;
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+
+        .form-container button:hover {
+            background-color: #0056b3;
+        }
+
+        footer {
+            background-color: #222529;
+            color: white;
+            text-align: center;
+            padding: 10px;
+        }
+
+        .chatbot-container {
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            width: 300px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            display: none;
+            flex-direction: column;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .chatbot-header {
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .chatbot-messages {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            max-height: 300px;
+        }
+
+        .chatbot-input {
+            display: flex;
+            padding: 10px;
+            border-top: 1px solid #ddd;
+        }
+
+        .chatbot-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+
+        .chatbot-input button {
+            margin-left: 10px;
+            padding: 10px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+
+        .chatbot-input button:hover {
+            background-color: #0056b3;
+        }
+
+        .chatbot-message {
+            margin-bottom: 10px;
+        }
+
+        .chatbot-message.user {
+            text-align: right;
+            color: #007bff;
+        }
+
+        .chatbot-message.bot {
+            text-align: left;
+            color: #333;
+        }
+
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Sistema de Gestión de Equipo Mecatronico</h1>
+        <div class="header-buttons">
+            <button onclick="logout()" id="negative-button">Cerrar Sesión</button>
+            <button onclick="support()">Mixteam Chat</button>
+        </div>
+    </header>
+    <nav>
+        <button onclick="showSection('inventory-section')">Inventario</button>
+        <button onclick="showSection('providers-section')">Proveedores</button>
+        <button onclick="showSection('acquisitions-section')">Adquisiciones</button>
+        <button onclick="showSection('maintenance-section')">Mantenimiento</button>
+        <button onclick="showSection('movements-section')">Movimientos</button>
+    </nav>
+    <main>
+        <!-- Sección de Inventario -->
+        <div id="inventory-section" class="section">
+            <h2>Inventario</h2>
+            <div class="form-container">
+                <form id="add-item-form" onsubmit="addItem(event)">
+                    <input type="text" id="item-name" placeholder="Nombre del ítem" required>
+                    <input type="number" id="item-quantity" placeholder="Cantidad" required>
+                    <input type="text" id="item-provider" placeholder="Proveedor" required>
+                    <input type="date" id="item-date" placeholder="Fecha" required>
+                    <button type="submit">Añadir Ítem</button>
+                </form>
+            </div>
+            <table id="inventory-list">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Cantidad</th>
+                        <th>Proveedor</th>
+                        <th>Fecha</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Los ítems se llenarán aquí -->
+                </tbody>
+            </table>
+        </div>
+        <!-- Sección de Proveedores -->
+        <div id="providers-section" class="section">
+            <h2>Proveedores</h2>
+            <div class="form-container">
+                <form id="add-provider-form" onsubmit="addProvider(event)">
+                    <input type="text" id="provider-name" placeholder="Nombre del proveedor" required>
+                    <input type="text" id="provider-contact" placeholder="Contacto" required>
+                    <button type="submit">Añadir Proveedor</button>
+                </form>
+            </div>
+            <table id="providers-list">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Contacto</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Los proveedores se llenarán aquí -->
+                </tbody>
+            </table>
+        </div>
+        <!-- Sección de Adquisiciones -->
+        <div id="acquisitions-section" class="section">
+            <h2>Adquisiciones</h2>
+            <div class="form-container">
+                <form id="add-acquisition-form" onsubmit="addAcquisition(event)">
+                    <input type="text" id="acquisition-item" placeholder="Ítem" required>
+                    <input type="date" id="acquisition-date" placeholder="Fecha" required>
+                    <input type="number" id="acquisition-quantity" placeholder="Cantidad" required>
+                    <input type="text" id="acquisition-provider" placeholder="Proveedor" required>
+                    <button type="submit">Añadir Adquisición</button>
+                </form>
+            </div>
+            <table id="acquisitions-list">
+                <thead>
+                    <tr>
+                        <th>Ítem</th>
+                        <th>Fecha</th>
+                        <th>Cantidad</th>
+                        <th>Proveedor</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Las adquisiciones se llenarán aquí -->
+                </tbody>
+            </table>
+        </div>
+        <!-- Sección de Mantenimiento -->
+        <div id="maintenance-section" class="section">
+            <h2>Mantenimiento</h2>
+            <div class="form-container">
+                <form id="add-maintenance-form" onsubmit="addMaintenance(event)">
+                    <input type="text" id="maintenance-item" placeholder="Ítem" required>
+                    <input type="date" id="maintenance-date" placeholder="Fecha" required>
+                    <input type="text" id="maintenance-description" placeholder="Descripción" required>
+                    <button type="submit">Añadir Mantenimiento</button>
+                </form>
+            </div>
+            <table id="maintenance-list">
+                <thead>
+                    <tr>
+                        <th>Ítem</th>
+                        <th>Fecha</th>
+                        <th>Descripción</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Los mantenimientos se llenarán aquí -->
+                </tbody>
+            </table>
+        </div>
+        <!-- Sección de Movimientos -->
+        <div id="movements-section" class="section">
+            <h2>Movimientos de Inventario</h2>
+            <div class="form-container">
+                <form id="add-movement-form" onsubmit="addMovement(event)">
+                    <input type="text" id="movement-item" placeholder="Ítem" required>
+                    <input type="date" id="movement-date" placeholder="Fecha" required>
+                    <input type="number" id="movement-quantity" placeholder="Cantidad" required>
+                    <select id="movement-type" required>
+                        <option value="" disabled selected>Tipo de Movimiento</option>
+                        <option value="Entrada">Entrada</option>
+                        <option value="Salida">Salida</option>
+                    </select>
+                    <button type="submit">Añadir Movimiento</button>
+                </form>
+            </div>
+            <table id="movements-list">
+                <thead>
+                    <tr>
+                        <th>Ítem</th>
+                        <th>Fecha</th>
+                        <th>Cantidad</th>
+                        <th>Tipo</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Los movimientos se llenarán aquí -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+    <footer>
+        <p>&copy; 2024 Sistema de Gestión de Inventarios</p>
+    </footer>
+    <div id="chatbot-container" class="chatbot-container">
+        <div class="chatbot-header" onclick="toggleChatbot()">Chatbot</div>
+        <div class="chatbot-messages" id="chatbot-messages"></div>
+        <div class="chatbot-input">
+            <input type="text" id="chatbot-input" placeholder="Escribe tu mensaje...">
+            <button onclick="sendMessage()">Enviar</button>
+        </div>
+    </div>
+    <script>
+        let inventory = [];
+        let providers = [];
+        let acquisitions = [];
+        let maintenance = [];
+        let movements = [];
+
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(sectionId).classList.add('active');
+        }
+
+        function addItem(event) {
+            event.preventDefault();
+            const name = document.getElementById('item-name').value;
+            const quantity = document.getElementById('item-quantity').value;
+            const provider = document.getElementById('item-provider').value;
+            const date = document.getElementById('item-date').value;
+
+            inventory.push({ name, quantity, provider, date });
+            updateInventoryTable();
+        }
+
+        function addProvider(event) {
+            event.preventDefault();
+            const name = document.getElementById('provider-name').value;
+            const contact = document.getElementById('provider-contact').value;
+
+            providers.push({ name, contact });
+            updateProvidersTable();
+        }
+
+        function addAcquisition(event) {
+            event.preventDefault();
+            const item = document.getElementById('acquisition-item').value;
+            const date = document.getElementById('acquisition-date').value;
+            const quantity = document.getElementById('acquisition-quantity').value;
+            const provider = document.getElementById('acquisition-provider').value;
+
+            acquisitions.push({ item, date, quantity, provider });
+            updateAcquisitionsTable();
+        }
+
+        function addMaintenance(event) {
+            event.preventDefault();
+            const item = document.getElementById('maintenance-item').value;
+            const date = document.getElementById('maintenance-date').value;
+            const description = document.getElementById('maintenance-description').value;
+
+            maintenance.push({ item, date, description });
+            updateMaintenanceTable();
+        }
+
+        function addMovement(event) {
+            event.preventDefault();
+            const item = document.getElementById('movement-item').value;
+            const date = document.getElementById('movement-date').value;
+            const quantity = document.getElementById('movement-quantity').value;
+            const type = document.getElementById('movement-type').value;
+
+            movements.push({ item, date, quantity, type });
+            updateMovementsTable();
+        }
+
+        function updateInventoryTable() {
+            const tableBody = document.querySelector('#inventory-list tbody');
+            tableBody.innerHTML = '';
+            inventory.forEach((item, index) => {
+                tableBody.innerHTML += `
+                    <tr>
+                        <td>${item.name}</td>
+                        <td>${item.quantity}</td>
+                        <td>${item.provider}</td>
+                        <td>${item.date}</td>
+                        <td><button onclick="removeItem(${index})">Eliminar</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        function updateProvidersTable() {
+            const tableBody = document.querySelector('#providers-list tbody');
+            tableBody.innerHTML = '';
+            providers.forEach((provider, index) => {
+                tableBody.innerHTML += `
+                    <tr>
+                        <td>${provider.name}</td>
+                        <td>${provider.contact}</td>
+                        <td><button onclick="removeProvider(${index})">Eliminar</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        function updateAcquisitionsTable() {
+            const tableBody = document.querySelector('#acquisitions-list tbody');
+            tableBody.innerHTML = '';
+            acquisitions.forEach((acquisition, index) => {
+                tableBody.innerHTML += `
+                    <tr>
+                        <td>${acquisition.item}</td>
+                        <td>${acquisition.date}</td>
+                        <td>${acquisition.quantity}</td>
+                        <td>${acquisition.provider}</td>
+                        <td><button onclick="removeAcquisition(${index})">Eliminar</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        function updateMaintenanceTable() {
+            const tableBody = document.querySelector('#maintenance-list tbody');
+            tableBody.innerHTML = '';
+            maintenance.forEach((maint, index) => {
+                tableBody.innerHTML += `
+                    <tr>
+                        <td>${maint.item}</td>
+                        <td>${maint.date}</td>
+                        <td>${maint.description}</td>
+                        <td><button onclick="removeMaintenance(${index})">Eliminar</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        function updateMovementsTable() {
+            const tableBody = document.querySelector('#movements-list tbody');
+            tableBody.innerHTML = '';
+            movements.forEach((movement, index) => {
+                tableBody.innerHTML += `
+                    <tr>
+                        <td>${movement.item}</td>
+                        <td>${movement.date}</td>
+                        <td>${movement.quantity}</td>
+                        <td>${movement.type}</td>
+                        <td><button onclick="removeMovement(${index})">Eliminar</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        function removeItem(index) {
+            inventory.splice(index, 1);
+            updateInventoryTable();
+        }
+
+        function removeProvider(index) {
+            providers.splice(index, 1);
+            updateProvidersTable();
+        }
+
+        function removeAcquisition(index) {
+            acquisitions.splice(index, 1);
+            updateAcquisitionsTable();
+        }
+
+        function removeMaintenance(index) {
+            maintenance.splice(index, 1);
+            updateMaintenanceTable();
+        }
+
+        function removeMovement(index) {
+            movements.splice(index, 1);
+            updateMovementsTable();
+        }
+
+        function toggleChatbot() {
+            const chatbot = document.getElementById('chatbot-container');
+            chatbot.style.display = (chatbot.style.display === 'none' || chatbot.style.display === '') ? 'flex' : 'none';
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chatbot-input');
+            const message = input.value;
+            if (message.trim() !== '') {
+                const messagesContainer = document.getElementById('chatbot-messages');
+
+                // Display user message
+                const userMessage = document.createElement('div');
+                userMessage.className = 'chatbot-message user';
+                userMessage.textContent = message;
+                messagesContainer.appendChild(userMessage);
+
+                // Display bot response
+                const botMessage = document.createElement('div');
+                botMessage.className = 'chatbot-message bot';
+                if (message.toLowerCase().includes('inventario')) {
+                    botMessage.textContent = 'Aquí está la lista de ítems en el inventario:';
+                    botMessage.innerHTML += '<ul>' + inventory.map(item => `<li>${item.name} - Cantidad: ${item.quantity}</li>`).join('') + '</ul>';
+                } else if (message.toLowerCase().includes('añadir ítem')) {
+                    botMessage.textContent = 'Para añadir un ítem, utiliza el formulario en la sección de Inventario.';
+                } else if (message.toLowerCase().includes('eliminar ítem')) {
+                    botMessage.textContent = 'Para eliminar un ítem, utiliza el botón de eliminar junto al ítem en la sección de Inventario.';
+                } else if (message.toLowerCase().includes('proveedores')) {
+                    botMessage.textContent = 'Aquí está la lista de proveedores:';
+                    botMessage.innerHTML += '<ul>' + providers.map(provider => `<li>${provider.name} - Contacto: ${provider.contact}</li>`).join('') + '</ul>';
+                } else if (message.toLowerCase().includes('adquisiciones')) {
+                    botMessage.textContent = 'Aquí está la lista de adquisiciones:';
+                    botMessage.innerHTML += '<ul>' + acquisitions.map(acquisition => `<li>Ítem: ${acquisition.item} - Cantidad: ${acquisition.quantity} - Proveedor: ${acquisition.provider}</li>`).join('') + '</ul>';
+                } else if (message.toLowerCase().includes('mantenimiento')) {
+                    botMessage.textContent = 'Aquí está la lista de mantenimientos:';
+                    botMessage.innerHTML += '<ul>' + maintenance.map(maint => `<li>Ítem: ${maint.item} - Descripción: ${maint.description}</li>`).join('') + '</ul>';
+                } else if (message.toLowerCase().includes('movimientos')) {
+                    botMessage.textContent = 'Aquí está la lista de movimientos de inventario:';
+                    botMessage.innerHTML += '<ul>' + movements.map(movement => `<li>Ítem: ${movement.item} - Cantidad: ${movement.quantity} - Tipo: ${movement.type}</li>`).join('') + '</ul>';
+                } else {
+                    botMessage.textContent = 'Lo siento, no entendí tu mensaje. Por favor, prueba con otra consulta.';
+                }
+                messagesContainer.appendChild(botMessage);
+                input.value = '';
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+        }
+
+        function logout() {
+            // Aquí va la lógica de cierre de sesión
+            alert('Cierre de sesión realizado.');
+        }
+
+        function support() {
+            toggleChatbot();
+        }
+    </script>
+</body>
+</html>
+
+
+
